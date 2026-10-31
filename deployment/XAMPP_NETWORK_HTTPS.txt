@@ -1,0 +1,54 @@
+OFFICE LAN / FIXED IP / HTTPS
+
+These steps run on your office Windows PCs, not inside the attendance app.
+
+1. Reserve the server IPv4 address and each employee PC IPv4 address in the
+   office router/DHCP server using their network adapter MAC addresses.
+   Alternatively ask IT to set static IPv4 addresses outside the DHCP pool,
+   using your actual subnet mask, gateway and DNS. Do not reuse another PC's IP.
+   Run ipconfig on the server and employee PCs to find their actual addresses.
+
+2. In Office_Attendance_System/config.php keep 127.0.0.1/32 and add your actual
+   office subnet. Example ONLY, for a 192.168.1.x /24 office:
+   'allowed_networks'=>['127.0.0.1/32','192.168.1.0/24'],
+   Admin > Office Computers: approve each employee and their reserved PC IP.
+   Employees open http://SERVER_IP/Office_Attendance_System/.
+   localhost on an employee PC points to that PC, not your XAMPP server.
+   Allow Apache through Windows Firewall for the office/private network.
+   Do not configure router port forwarding for this app.
+
+3. For HTTPS ask IT for a certificate and private key whose Subject Alternative
+   Name contains the server IP (IP SAN) or the hostname employees will use
+   (DNS SAN). A private office CA works without a Windows domain: install
+   its root certificate in Trusted Root Certification Authorities on all office
+   PCs through IT's normal certificate installation process.
+   Never distribute the server private key to employee PCs.
+
+4. In C:/xampp/apache/conf/httpd.conf verify these are enabled:
+   LoadModule ssl_module modules/mod_ssl.so
+   LoadModule socache_shmcb_module modules/mod_socache_shmcb.so
+   Include conf/extra/httpd-ssl.conf
+   Back up httpd.conf and conf/extra/httpd-ssl.conf first.
+   In httpd-ssl.conf replace the appropriate SSL VirtualHost with the edited
+   office-https.conf.example template. Keep Listen 443 only once. If another
+   site already uses 443, ask IT to select the correct virtual host; do not
+   replace another site's settings.
+   Copy your certificate/key to the paths in the template or edit those paths.
+   Run C:/xampp/apache/bin/httpd.exe -t and restart Apache only when it says
+   Syntax OK. Open https://SERVER_IP/Office_Attendance_System/ and confirm the
+   certificate is trusted and matches the address. PHP will then set Secure
+   on attendance session cookies automatically.
+
+5. After verifying HTTPS on every office PC, optionally force HTTPS for this
+   app by adding the following after RewriteBase in its root .htaccess:
+   RewriteCond %{HTTPS} !=on
+   RewriteRule ^ https://YOUR_ACTUAL_SERVER_IP%{REQUEST_URI} [R=302,L]
+   Replace YOUR_ACTUAL_SERVER_IP with your certificate's actual IP or hostname.
+   Use the new HTTPS address even on the server when this redirect is enabled.
+
+IP approval restricts the network address used for a punch. It does not verify
+physical PC hardware or stop a person using somebody else's credentials.
+
+Apache official reference:
+https://httpd.apache.org/docs/2.4/ssl/ssl_howto.html
+https://httpd.apache.org/docs/2.4/mod/mod_ssl.html

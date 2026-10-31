@@ -1,0 +1,14 @@
+# Edit YOUR_SERVER_IP and certificate paths before use.
+# Use this as the attendance SSL virtual host in XAMPP's httpd-ssl.conf.
+# Keep Listen 443 and LoadModule ssl_module configured once in Apache.
+<VirtualHost *:443>
+ ServerName YOUR_SERVER_IP:443
+ DocumentRoot "C:/xampp/htdocs"
+ SSLEngine on
+ SSLCertificateFile "C:/xampp/apache/conf/ssl.crt/office-server.crt"
+ SSLCertificateKeyFile "C:/xampp/apache/conf/ssl.key/office-server.key"
+ <Directory "C:/xampp/htdocs/Office_Attendance_System">
+  AllowOverride All
+  Require all granted
+ </Directory>
+</VirtualHost>
